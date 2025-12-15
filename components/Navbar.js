@@ -1,34 +1,25 @@
 // components/Navbar.js
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { auth, db } from "../lib/firebase";
+import { auth } from "../lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/router";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
-  const [userDoc, setUserDoc] = useState(null);
   const [theme, setTheme] = useState("light");
+  const [open, setOpen] = useState(false);
   const router = useRouter();
 
-  // Auth + user role
+  // auth
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        const snap = await getDoc(doc(db, "users", u.uid));
-        setUserDoc(snap.exists() ? snap.data() : null);
-      } else {
-        setUserDoc(null);
-      }
-    });
+    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsub();
   }, []);
 
-  // Theme load
+  // theme
   useEffect(() => {
-    const saved = typeof window !== "undefined" && localStorage.getItem("theme");
+    const saved = localStorage.getItem("theme");
     if (saved === "dark") {
       document.documentElement.classList.add("dark");
       setTheme("dark");
@@ -36,112 +27,116 @@ export default function Navbar() {
   }, []);
 
   const toggleTheme = () => {
-    const html = document.documentElement;
-    if (html.classList.contains("dark")) {
-      html.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      setTheme("light");
-    } else {
-      html.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setTheme("dark");
-    }
-  };
-
-  // 🔥 SELL BUTTON LOGIC (FIXED)
-  const handleSellClick = () => {
-    // 1️⃣ Not logged in
-    if (!user) {
-      router.push("/auth/signin");
-      return;
-    }
-
-    // 2️⃣ User doc not loaded yet OR not seller OR KYC not approved
-    if (
-      !userDoc ||
-      userDoc.role !== "seller" ||
-      userDoc.kyc?.status !== "approved"
-    ) {
-      router.push("/seller/dashboard");
-      return;
-    }
-
-    // 3️⃣ Seller + KYC approved
-    router.push("/create-listing");
+    document.documentElement.classList.toggle("dark");
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("theme", next);
   };
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-50">
-      <div className="mx-auto max-w-6xl px-6 py-4 rounded-b-xl border border-white/30 dark:border-neutral-800/40 shadow-md backdrop-blur bg-white/70 dark:bg-neutral-900/70">
-        <div className="flex items-center justify-between">
+    <nav className="fixed top-0 inset-x-0 z-50 bg-white/80 dark:bg-neutral-900/80 backdrop-blur border-b border-zinc-200 dark:border-neutral-800">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
 
-          {/* LEFT */}
-          <div className="flex items-center space-x-6">
-            <Link href="/" className="text-2xl font-serif text-zinc-900 dark:text-white">
-              BookSwaply
+        {/* LEFT */}
+        <Link href="/" className="text-xl font-serif font-bold text-zinc-900 dark:text-white">
+          BookSwaply
+        </Link>
+
+        {/* DESKTOP MENU */}
+        <div className="hidden md:flex items-center gap-4">
+          <Link href="/listings" className="nav-link">Browse</Link>
+
+          <Link
+            href="/create-listing"
+            className="px-3 py-1.5 text-xs font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + Sell
+          </Link>
+
+          <button onClick={toggleTheme} className="p-2 rounded-md bg-zinc-200 dark:bg-neutral-700">
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+
+          {user && (
+            <Link href="/inbox" className="nav-link">
+              Messages
             </Link>
+          )}
 
-            <Link
-              href="/listings"
-              className="text-sm text-zinc-700 dark:text-zinc-300 hover:text-blue-600 transition"
-            >
-              Browse
-            </Link>
+          <Link href="/saved" className="nav-link">Saved</Link>
 
-            {/* ✅ SELL BUTTON (SMART) */}
-            <button
-              onClick={handleSellClick}
-              className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold
-              bg-blue-600 text-white hover:bg-blue-700 transition shadow-sm"
-            >
-              + Sell
-            </button>
-          </div>
-
-          {/* RIGHT */}
-          <div className="flex items-center space-x-4">
-
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-md bg-zinc-200 dark:bg-neutral-700"
-            >
-              {theme === "dark" ? "☀️" : "🌙"}
-            </button>
-
-            {/* 📩 MESSAGES */}
-            {user && (
-              <Link
-                href="/inbox"
-                className="text-sm text-zinc-700 dark:text-zinc-300 hover:text-blue-600 transition"
-              >
-                Messages
+          {user ? (
+            <>
+              <Link href="/user/dashboard" className="btn-primary">
+                Dashboard
               </Link>
-            )}
-
-            <Link href="/saved" className="text-sm">
-              Saved
+              <button onClick={() => signOut(auth)} className="btn-ghost">
+                Sign out
+              </button>
+            </>
+          ) : (
+            <Link href="/auth/signin" className="btn-primary">
+              Sign in
             </Link>
-
-            {user ? (
-              <>
-                <Link href="/user/dashboard" className="btn-primary">
-                  Dashboard
-                </Link>
-
-                <button onClick={() => signOut(auth)} className="btn-ghost">
-                  Sign out
-                </button>
-              </>
-            ) : (
-              <Link href="/auth/signin" className="btn-primary">
-                Sign in
-              </Link>
-            )}
-          </div>
-
+          )}
         </div>
+
+        {/* MOBILE BUTTON */}
+        <button
+          onClick={() => setOpen(!open)}
+          className="md:hidden p-2 rounded-md bg-zinc-200 dark:bg-neutral-700"
+        >
+          ☰
+        </button>
       </div>
+
+      {/* MOBILE MENU */}
+      {open && (
+        <div className="md:hidden bg-white dark:bg-neutral-900 border-t border-zinc-200 dark:border-neutral-800 px-4 py-4 space-y-3">
+          <Link href="/listings" className="block nav-link" onClick={()=>setOpen(false)}>
+            Browse
+          </Link>
+
+          <Link href="/create-listing" className="block nav-link" onClick={()=>setOpen(false)}>
+            Sell Book
+          </Link>
+
+          {user && (
+            <Link href="/inbox" className="block nav-link" onClick={()=>setOpen(false)}>
+              Messages
+            </Link>
+          )}
+
+          <Link href="/saved" className="block nav-link" onClick={()=>setOpen(false)}>
+            Saved
+          </Link>
+
+          <button onClick={toggleTheme} className="block nav-link">
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </button>
+
+          {user ? (
+            <>
+              <Link href="/user/dashboard" className="block nav-link" onClick={()=>setOpen(false)}>
+                Dashboard
+              </Link>
+              <button
+                onClick={() => {
+                  signOut(auth);
+                  setOpen(false);
+                }}
+                className="block nav-link text-left"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <Link href="/auth/signin" className="block nav-link" onClick={()=>setOpen(false)}>
+              Sign in
+            </Link>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
