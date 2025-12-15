@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === THEME TOKENS (light = warm paper; dark = deep library) === */
+:root{
+  --paper: #F7EFE6;       /* warm paper background */
+  --accent: #8B5E3C;      /* book brown */
+  --accent-2:#D97706;     /* amber highlight */
+  --muted:#6B7280;        /* gray */
+}
+
+/* base */
+@layer base {
+  /* Import a serif + system sans for headings/body */
+  @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+
+  html {
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  h1,h2,h3,h4 {
+    font-family: 'Merriweather', serif;
+  }
+
+  body {
+    @apply bg-[color:var(--tw-bg-opacity,0)] text-zinc-800;
+    background-color: var(--paper);
+    transition: background-color 250ms ease, color 250ms ease;
+  }
+
+  /* dark mode tokens */
+  .dark body {
+    background-color: #0b0f0e; /* deep charcoal */
+    color: #e6e6e1;
+  }
+}
+
+/* === DESIGN UTILITIES === */
+@layer components {
+  /* main "card" used across site (glass + paper) */
+  .card {
+    @apply rounded-xl shadow-md p-4 bg-white/70 backdrop-blur-sm border border-white/30;
+    background-color: rgba(255,255,255,0.65);
+  }
+  .dark .card {
+    @apply bg-neutral-800/60 border-neutral-700/40;
+    background-color: rgba(20,20,20,0.6);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium shadow-sm;
+    background: linear-gradient(90deg,var(--accent),var(--accent-2));
+  }
+  .btn-primary:active{ transform:translateY(1px) }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-3 py-2 rounded-md border text-sm;
+    border-color: rgba(0,0,0,0.06);
+  }
+  .dark .btn-ghost{ border-color: rgba(255,255,255,0.06) }
+
+  /* small pill for tags */
+  .pill {
+    @apply inline-block text-xs px-2 py-1 rounded-full font-medium;
+    background-color: rgba(139,94,60,0.08);
+    color: var(--accent);
+  }
+
+  /* card image container */
+  .card-image {
+    @apply rounded-lg overflow-hidden bg-gray-100;
+  }
+
+  /* shadow accent for hero */
+  .hero-glow{
+    box-shadow: 0 8px 30px rgba(139,94,60,0.12);
+  }
+}
+
+/* helpers */
+@layer utilities {
+  .glass-gradient {
+    background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));
+    backdrop-filter: blur(6px);
+  }
+}
+@keyframes toast {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+.animate-toast {
+  animation: toast 3s ease forwards;
+}
+@layer utilities {
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out;
+  }
+}

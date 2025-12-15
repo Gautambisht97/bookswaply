@@ -1,0 +1,9 @@
+@import "./tailwind.css";
+
+/* small layout helper */
+.site-container {
+  max-width: 1150px;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
